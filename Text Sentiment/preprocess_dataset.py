@@ -75,8 +75,8 @@ num_test = int(0.25 * len(Y))
 tweets_limpios_test = tweets_limpios[-num_test:]
 Y_test = Y[-num_test:]
 
-tweets_limpios = tweets_limpios[:-num_test]
-Y = Y[:-num_test]
+tweets_limpios_train = tweets_limpios[:-num_test]
+Y_train = Y[:-num_test]
 
 
 
@@ -89,6 +89,7 @@ Y = Y[:-num_test]
 
 with open('stopwords.txt','r') as f:
 	stopwords = [line.rstrip() for line in f.readlines()]
+
 
 
 
@@ -105,7 +106,7 @@ pipe = Pipeline([
 	('clf',MultinomialNB())
 ])
 
-pipe.fit(tweets_limpios, Y)
+pipe.fit(tweets_limpios_train, Y_train)
 
 with open("modelos/nb.model", "wb") as f:
 	pickle.dump(pipe, f)
