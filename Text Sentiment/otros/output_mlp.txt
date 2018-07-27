@@ -1,0 +1,25 @@
+Hay 22286 palabras
+Hay 12975 raices
+Eficacia NB: 0.8689211850195641
+Iteration 1, loss = 0.56353703
+Iteration 2, loss = 0.22042216
+Iteration 3, loss = 0.05604585
+Iteration 4, loss = 0.02484133
+Iteration 5, loss = 0.01672065
+Iteration 6, loss = 0.01382388
+Iteration 7, loss = 0.01275034
+Iteration 8, loss = 0.01188562
+Iteration 9, loss = 0.01127643
+Iteration 10, loss = 0.01104840
+Iteration 11, loss = 0.01107476
+Iteration 12, loss = 0.01107198
+Iteration 13, loss = 0.01051098
+Iteration 14, loss = 0.01029782
+Iteration 15, loss = 0.01035902
+Iteration 16, loss = 0.00966777
+Iteration 17, loss = 0.01021632
+Iteration 18, loss = 0.01031101
+Iteration 19, loss = 0.01053559
+Training loss did not improve more than tol=0.000100 for two consecutive epochs. Stopping.
+0.8669647847959754
+

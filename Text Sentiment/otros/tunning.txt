@@ -1,0 +1,82 @@
+[  
+   mean:0.46627,
+   std:0.02195,
+   params:{  
+      'clf__hidden_layer_sizes':(2000,
+      ),
+      'tfidf__use_idf':True,
+      'vect__ngram_range':(1,
+      1      ),
+      'vect__preprocessor':None
+   },
+   mean:0.48214,
+   std:0.01613,
+   params:{  
+      'clf__hidden_layer_sizes':(2000,
+      ),
+      'tfidf__use_idf':True,
+      'vect__ngram_range':(1,
+      1      ),
+      'vect__preprocessor':<function Lemmatizador at 0x7fe0da2ff7b8>
+   },
+   mean:0.47222,
+   std:0.00177,
+   params:{  
+      'clf__hidden_layer_sizes':(2000,
+      ),
+      'tfidf__use_idf':True,
+      'vect__ngram_range':(1,
+      2      ),
+      'vect__preprocessor':None
+   },
+   mean:0.49206,
+   std:0.00544,
+   params:{  
+      'clf__hidden_layer_sizes':(2000,
+      ),
+      'tfidf__use_idf':True,
+      'vect__ngram_range':(1,
+      2      ),
+      'vect__preprocessor':<function Lemmatizador at 0x7fe0da2ff7b8>
+   },
+   mean:0.46925,
+   std:0.02319,
+   params:{  
+      'clf__hidden_layer_sizes':(2000,
+      ),
+      'tfidf__use_idf':False,
+      'vect__ngram_range':(1,
+      1      ),
+      'vect__preprocessor':None
+   },
+   mean:0.49107,
+   std:0.01594,
+   params:{  
+      'clf__hidden_layer_sizes':(2000,
+      ),
+      'tfidf__use_idf':False,
+      'vect__ngram_range':(1,
+      1      ),
+      'vect__preprocessor':<function Lemmatizador at 0x7fe0da2ff7b8>
+   },
+   mean:0.47321,
+   std:0.00526,
+   params:{  
+      'clf__hidden_layer_sizes':(2000,
+      ),
+      'tfidf__use_idf':False,
+      'vect__ngram_range':(1,
+      2      ),
+      'vect__preprocessor':None
+   },
+   mean:0.49504,
+   std:0.00670,
+   params:{  
+      'clf__hidden_layer_sizes':(2000,
+      ),
+      'tfidf__use_idf':False,
+      'vect__ngram_range':(1,
+      2      ),
+      'vect__preprocessor':<function Lemmatizador at 0x7fe0da2ff7b8>
+   }
+]

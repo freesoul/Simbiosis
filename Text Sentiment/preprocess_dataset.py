@@ -2,150 +2,247 @@
 
 
 import re
-import xml.etree.ElementTree
+import csv
 import numpy as np
+
+from sklearn.feature_extraction.text import TfidfTransformer
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.pipeline import Pipeline
+from sklearn.svm import SVC
+from sklearn.model_selection import GridSearchCV
+from sklearn.neural_network import MLPClassifier
+from sklearn.feature_selection import SelectKBest, chi2, VarianceThreshold
+import pickle
+
+from lemmatizador import *
+from limpia_texto import *
+
 
 np.set_printoptions(threshold=np.nan)
 
 
 
-def limpia_texto(texto):
-	return ' '.join(
-		[palabra.lower() for palabra in 
-			re.sub(
-				"(@[A-Za-z0-9]+)|([A-Za-zá-ú]*[0-9]+[A-Za-zá-ú]*)|([^A-Za-z \tá-ú])|(\w+:\/\/\S+)", 
-				" ", 
-				texto
-			).split()]
-	)
-
-def one_hot(input_, bolsa, invierte=False):
-	if not invierte:
-		onehot = np.zeros(len(bolsa))
-		if input_ in bolsa:
-			indice = bolsa.index(input_)
-			onehot[indice] = 1
-		return onehot
-	else:
-		indice = np.flatnonzero(input_==1)
-		return None if len(indice)!=1 else bolsa[indice[0]]
+#####################################################################
+#
+#	Leemos el dataset
+#
+#####################################################################
 
 
+with open('dataset.csv', 'r') as f:
+	raw = csv.reader(f, delimiter=',', quotechar='"')
+
+	data = []
+	for row in raw:
+		data.append([
+			row[0],
+			row[1],
+			limpia_texto(row[0])
+		])
+
+tweets_limpios = np.asarray(data)[:,2]
+Y = np.asarray(data)[:,1]
 
 
-data_xml = xml.etree.ElementTree.parse('intertass/intertass-ES-train-tagged.xml').getroot()
 
-data = []
-for entry in data_xml:
-	data.append([
-		entry.find('content').text,
-		limpia_texto(entry.find('content').text),
-		entry.find('sentiment').find('polarity').find('value').text
-	])
-
-
-tweets_limpios = np.asarray(data)[:,1]
+#####################################################################
+#
+#	Cual es el tamaño del vocabulario?
+#
+#####################################################################
 
 bolsa_de_palabras = sorted(set(' '.join(tweets_limpios).split()))
 
-# print(bolsa_de_palabras)
+print("Hay {} palabras".format(len(bolsa_de_palabras)))
 
-def en_cuantos_documentos(palabra, data_):
-	return len([1 for row in data_ if palabra in row.split()])
+bolsa_de_raices = sorted(set(Lemmatizador(' '.join(bolsa_de_palabras)).split()))
 
-idfs = np.array([en_cuantos_documentos(palabra, tweets_limpios) for palabra in bolsa_de_palabras])
-# # print(idfs)
-
-idfs = np.log(len(tweets_limpios)) - np.log(1 + idfs)
-# # idfs = np.log(idfs)
-# # idfs = idfs - np.log(len(tweets_limpios))
-
-# tfs = np.array([np.sum([one_hot(palabra, bolsa_de_palabras) for palabra in tweet.split()], axis=0) / len(tweet.split()) for tweet in tweets_limpios])
-
-# tfidfs = tfs*idfs
-
-# with open("tfidfs.npy", "wb") as f:
-# 	np.save(f, tfidfs)
-
-with open("tfidfs.npy", "rb") as f:
-	tfidfs = np.load(f)
-
-# print(tfidfs[0])
-
-Y = np.asarray(data)[:,2]
+print("Hay {} raices".format(len(bolsa_de_raices)))
 
 
 
-from sklearn.naive_bayes import MultinomialNB
-
-modelo = MultinomialNB()
-modelo.fit(tfidfs, Y)
-
-
-
-#########################
-# test set
-########################
-
-data_xml_test = xml.etree.ElementTree.parse('intertass/intertass-ES-development-tagged.xml').getroot()
-
-data_test = []
-for entry in data_xml_test:
-	data_test.append([
-		entry.find('content').text,
-		limpia_texto(entry.find('content').text),
-		entry.find('sentiment').find('polarity').find('value').text
-	])
+#####################################################################
+#
+#	Separamos train y test sets
+#
+#####################################################################
 
 
-tweets_limpios_test = np.asarray(data_test)[:,1]
+num_test = int(0.25 * len(Y))
+
+tweets_limpios_test = tweets_limpios[-num_test:]
+Y_test = Y[-num_test:]
+
+tweets_limpios = tweets_limpios[:-num_test]
+Y = Y[:-num_test]
 
 
 
-tfs_test = np.array([np.sum([one_hot(palabra, bolsa_de_palabras) for palabra in tweet.split()], axis=0) / len(tweet.split()) for tweet in tweets_limpios_test])
-X_test = tfs_test*idfs
+#####################################################################
+#
+#	Cargamos stopwords
+#
+#####################################################################
+
+
+with open('stopwords.txt','r') as f:
+	stopwords = [line.rstrip() for line in f.readlines()]
 
 
 
-Y_test = np.asarray(data_test)[:,2]
+#####################################################################
+#
+#	Modelo Multinomial
+#
+#####################################################################
 
-Y_pred = modelo.predict(X_test)
+#  TfidfVectorizer(),
+pipe = Pipeline([
+	('vect',CountVectorizer(ngram_range=(1,3), preprocessor=Lemmatizador)),  #, stop_words=stopwords
+	('tfidf',TfidfTransformer()),
+	('clf',MultinomialNB())
+])
 
+pipe.fit(tweets_limpios, Y)
 
-
-print(np.mean(Y_test==Y_pred)*100)
-
-# print(en_cuantos_documentos("viernes", tweets_limpios))
-
-# idfs = np.array([1+])
-
-
-# print(np.array(data)[:,1])
-
-# from sklearn.feature_extraction.text import CountVectorizer
-# from sklearn.feature_extraction.text import TfidfTransformer
-
-# cv = CountVectorizer()
-# data2 = cv.fit_transform(np.array(data)[:,1])
-
-# print(data2.shape)
-# print(data2[0])
-# print(np.array(data)[:,1][0])
-# print(cv.vocabulary_.get(u'me'))
+with open("modelos/nb.model", "wb") as f:
+	pickle.dump(pipe, f)
 
 
-# # bolsa_de_palabras = sorted(set(' '.join(np.asarray(data)[:,1]).split()))
+Y_pred = pipe.predict(tweets_limpios_test)
 
 
-# # # np.set_printoptions(threshold=np.nan)
-# # for document in data:
+print("Eficacia NB: {}".format(np.mean(Y_pred==Y_test)))
 
-# # 	tweet = document[1]
-# # 	# print(tweet)
-# # 	representacion = np.sum([one_hot(palabra, bolsa_de_palabras) for palabra in tweet.split()], axis=0)
-# # 	# print(representacion)
+# print(pipe.predict(["la verda es que son de lo mejor"])[0])
 
-# tfidf_transformer = TfidfTransformer()
-# X_train_tfidf = tfidf_transformer.fit_transform(data2)
-# print(X_train_tfidf.shape)
-# print(X_train_tfidf[2])
+
+
+
+#####################################################################
+#
+#	SVC
+#
+#####################################################################
+
+
+
+# pipe = Pipeline([
+# 	('vect',CountVectorizer(ngram_range=(1,3), preprocessor=Lemmatizador)),  #, stop_words=stopwords
+# 	('tfidf',TfidfTransformer()),
+# 	('clf',SVC())
+# ])
+
+# param_grid = [
+#   {'clf__C': [1, 10, 100, 1000], 'clf__kernel': ['linear']},
+#   # {'clf__C': [1, 10, 100, 1000], 'clf__gamma': [0.001, 0.0001], 'clf__kernel': ['rbf']},
+#  ]
+
+# gs_clf = GridSearchCV(pipe, param_grid, n_jobs=2, verbose=3)
+
+# gs_clf.fit(tweets_limpios, Y)
+
+# Y_pred = gs_clf.predict(tweets_limpios_test)
+
+# print("Eficacia NB: {}".format(np.mean(Y_pred==Y_test)))
+
+
+
+
+#####################################################################
+#
+#	MLP
+#
+#####################################################################
+
+# # Esto es para contar el numero de features tras seleccionar
+# # from sklearn.model_selection import GridSearchCV
+# # cv = CountVectorizer(ngram_range=(1,1), preprocessor=Lemmatizador)
+# # new = cv.fit_transform(tweets_limpios)
+# # new = VarianceThreshold(threshold=0.01).fit_transform(new)
+# # print(new.shape)
+
+
+
+# pipe = Pipeline([
+# 	('vect',CountVectorizer(ngram_range=(1,1), preprocessor=Lemmatizador)),
+# 	('clf',MLPClassifier(hidden_layer_sizes=(2000,), random_state=1, solver='adam', verbose=True))
+# ])
+
+
+# pipe.fit(tweets_limpios, Y)
+
+# Y_pred = pipe.predict(tweets_limpios_test)
+
+# # param_grid = [
+# #   {
+# #   	'clf__hidden_layer_sizes': [(5000,)], 
+# #   	# 'vect__ngram_range':[(1,1),(1,2)],
+# #   	# 'tfidf__use_idf':[True,False],
+# #   	# 'vect__preprocessor':[None, Lemmatizador]
+# #   }#, 'clf__solver':['adam','lbfgs']}#, 'clf__max_iter': [200,1000]}
+# #  ]
+# # gs_clf = GridSearchCV(pipe, param_grid, n_jobs=2, verbose=3)
+# # pipe.fit(tweets_limpios, Y)
+
+# # # print(pipe.grid_scores_)
+
+# # Y_pred = pipe.predict(tweets_limpios_test)
+
+
+# print(np.mean(Y_pred==Y_test))
+
+
+
+
+
+
+#####################################################################
+#
+#	SGD
+#
+#####################################################################
+
+
+
+# from sklearn.linear_model import SGDClassifier
+
+
+# pipe = Pipeline([
+# 	('vect',CountVectorizer(ngram_range=(1,3), preprocessor=Lemmatizador)),  #, stop_words=stopwords
+# 	('tfidf',TfidfTransformer()),
+# 	('clf',SGDClassifier(loss='hinge', penalty='l2', random_state=42, max_iter=15, tol=None))
+# ])
+# # pipe.fit(tweets_limpios, Y)
+
+
+
+# from sklearn.model_selection import GridSearchCV
+# parameters = {'vect__ngram_range': [(1, 1), (1, 2)],
+# 	           'tfidf__use_idf': (True, False),
+# 	           'clf__alpha': (1e-2, 1e-3),
+# }
+# gs_clf = GridSearchCV(pipe, parameters, n_jobs=-1)
+# gs_clf.fit(tweets_limpios, Y)
+
+# Y_pred = gs_clf.predict(tweets_limpios_test)
+
+
+# print(np.mean(Y_pred==Y_test))
+
+
+# # Y_pred = pipe.predict(tweets_limpios_test)
+
+
+# # print(np.mean(Y_pred==Y_test))
+
+
+
+
+
+
+
+
+
